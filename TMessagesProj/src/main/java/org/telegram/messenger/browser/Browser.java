@@ -72,7 +72,8 @@ public class Browser {
     private static WeakReference<Activity> currentCustomTabsActivity;
 
     private static CustomTabsSession getCurrentSession() {
-        return customTabsCurrentSession == null ? null : customTabsCurrentSession.get();
+        // return customTabsCurrentSession == null ? null : customTabsCurrentSession.get();
+        return null;
     }
 
     private static void setCurrentSession(CustomTabsSession session) {
@@ -91,64 +92,66 @@ public class Browser {
     }
 
     public static void bindCustomTabsService(Activity activity) {
-        Activity currentActivity = currentCustomTabsActivity == null ? null : currentCustomTabsActivity.get();
-        if (currentActivity != null && currentActivity != activity) {
-            unbindCustomTabsService(currentActivity);
-        }
-        if (customTabsClient != null) {
-            return;
-        }
-        currentCustomTabsActivity = new WeakReference<>(activity);
-        try {
-            if (TextUtils.isEmpty(customTabsPackageToBind)) {
-                customTabsPackageToBind = CustomTabsHelper.getPackageNameToUse(activity);
-                if (customTabsPackageToBind == null) {
-                    return;
-                }
-            }
-            customTabsServiceConnection = new ServiceConnection(new ServiceConnectionCallback() {
-                @Override
-                public void onServiceConnected(CustomTabsClient client) {
-                    customTabsClient = client;
-                    if (SharedConfig.customTabs) {
-                        if (customTabsClient != null) {
-                            try {
-                                customTabsClient.warmup(0);
-                            } catch (Exception e) {
-                                FileLog.e(e);
-                            }
-                        }
-                    }
-                }
+        // Activity currentActivity = currentCustomTabsActivity == null ? null : currentCustomTabsActivity.get();
+        // if (currentActivity != null && currentActivity != activity) {
+        //     unbindCustomTabsService(currentActivity);
+        // }
+        // if (customTabsClient != null) {
+        //     return;
+        // }
+        // currentCustomTabsActivity = new WeakReference<>(activity);
+        // try {
+        //     if (TextUtils.isEmpty(customTabsPackageToBind)) {
+        //         customTabsPackageToBind = CustomTabsHelper.getPackageNameToUse(activity);
+        //         if (customTabsPackageToBind == null) {
+        //             return;
+        //         }
+        //     }
+        //     customTabsServiceConnection = new ServiceConnection(new ServiceConnectionCallback() {
+        //         @Override
+        //         public void onServiceConnected(CustomTabsClient client) {
+        //             customTabsClient = client;
+        //             if (SharedConfig.customTabs) {
+        //                 if (customTabsClient != null) {
+        //                     try {
+        //                         customTabsClient.warmup(0);
+        //                     } catch (Exception e) {
+        //                         FileLog.e(e);
+        //                     }
+        //                 }
+        //             }
+        //         }
 
-                @Override
-                public void onServiceDisconnected() {
-                    customTabsClient = null;
-                }
-            });
-            if (!CustomTabsClient.bindCustomTabsService(activity, customTabsPackageToBind, customTabsServiceConnection)) {
-                customTabsServiceConnection = null;
-            }
-        } catch (Exception e) {
-            FileLog.e(e);
-        }
+        //         @Override
+        //         public void onServiceDisconnected() {
+        //             customTabsClient = null;
+        //         }
+        //     });
+        //     if (!CustomTabsClient.bindCustomTabsService(activity, customTabsPackageToBind, customTabsServiceConnection)) {
+        //         customTabsServiceConnection = null;
+        //     }
+        // } catch (Exception e) {
+        //     FileLog.e(e);
+        // }
+        return;
     }
 
     public static void unbindCustomTabsService(Activity activity) {
-        if (customTabsServiceConnection == null) {
-            return;
-        }
-        Activity currentActivity = currentCustomTabsActivity == null ? null : currentCustomTabsActivity.get();
-        if (currentActivity == activity) {
-            currentCustomTabsActivity.clear();
-        }
-        try {
-            activity.unbindService(customTabsServiceConnection);
-        } catch (Exception ignore) {
+        // if (customTabsServiceConnection == null) {
+        //     return;
+        // }
+        // Activity currentActivity = currentCustomTabsActivity == null ? null : currentCustomTabsActivity.get();
+        // if (currentActivity == activity) {
+        //     currentCustomTabsActivity.clear();
+        // }
+        // try {
+        //     activity.unbindService(customTabsServiceConnection);
+        // } catch (Exception ignore) {
 
-        }
-        customTabsClient = null;
-        customTabsSession = null;
+        // }
+        // customTabsClient = null;
+        // customTabsSession = null;
+        return;
     }
 
     private static class NavigationCallback extends CustomTabsCallback {
@@ -307,43 +310,47 @@ public class Browser {
         return openAsInternalIntent(context, url, forceNotInternalForApps, false, null);
     }
     public static boolean openAsInternalIntent(Context context, String url, boolean forceNotInternalForApps, boolean forceRequest, Progress progress) {
-        if (url == null) return false;
-        LaunchActivity activity = null;
-        if (AndroidUtilities.findActivity(context) instanceof LaunchActivity) {
-            activity = (LaunchActivity) AndroidUtilities.findActivity(context);
-        } else if (LaunchActivity.instance != null) {
-            activity = LaunchActivity.instance;
-        } else {
-            return false;
-        }
-        if (activity == null) return false;
-        final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        ComponentName componentName = new ComponentName(context.getPackageName(), LaunchActivity.class.getName());
-        intent.setComponent(componentName);
-        intent.putExtra(android.provider.Browser.EXTRA_CREATE_NEW_TAB, true);
-        intent.putExtra(android.provider.Browser.EXTRA_APPLICATION_ID, context.getPackageName());
-        intent.putExtra(LaunchActivity.EXTRA_FORCE_NOT_INTERNAL_APPS, forceNotInternalForApps);
-        intent.putExtra(LaunchActivity.EXTRA_FORCE_REQUEST, forceRequest);
-        activity.onNewIntent(intent, progress);
-        return true;
+        // if (url == null) return false;
+        // LaunchActivity activity = null;
+        // if (AndroidUtilities.findActivity(context) instanceof LaunchActivity) {
+        //     activity = (LaunchActivity) AndroidUtilities.findActivity(context);
+        // } else if (LaunchActivity.instance != null) {
+        //     activity = LaunchActivity.instance;
+        // } else {
+        //     return false;
+        // }
+        // if (activity == null) return false;
+        // final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        // ComponentName componentName = new ComponentName(context.getPackageName(), LaunchActivity.class.getName());
+        // intent.setComponent(componentName);
+        // intent.putExtra(android.provider.Browser.EXTRA_CREATE_NEW_TAB, true);
+        // intent.putExtra(android.provider.Browser.EXTRA_APPLICATION_ID, context.getPackageName());
+        // intent.putExtra(LaunchActivity.EXTRA_FORCE_NOT_INTERNAL_APPS, forceNotInternalForApps);
+        // intent.putExtra(LaunchActivity.EXTRA_FORCE_REQUEST, forceRequest);
+        // activity.onNewIntent(intent, progress);
+        // return true;
+        FileLog.d("Internal browser disabled: openAsInternalIntent skipped");
+        return false;
     }
 
     public static boolean openInTelegramBrowser(Context context, String url, Browser.Progress progress) {
-        if (LaunchActivity.instance != null) {
-            BottomSheetTabs tabs = LaunchActivity.instance.getBottomSheetTabs();
-            if (tabs != null && tabs.tryReopenTab(url) != null) {
-                return true;
-            }
-        }
-        BaseFragment fragment = LaunchActivity.getSafeLastFragment();
-        if (fragment != null && fragment.getParentLayout() instanceof ActionBarLayout) {
-            fragment = ((ActionBarLayout) fragment.getParentLayout()).getSheetFragment();
-        }
-        if (fragment == null) {
-            return false;
-        }
-        fragment.createArticleViewer(false).open(url, progress);
-        return true;
+        // if (LaunchActivity.instance != null) {
+        //     BottomSheetTabs tabs = LaunchActivity.instance.getBottomSheetTabs();
+        //     if (tabs != null && tabs.tryReopenTab(url) != null) {
+        //         return true;
+        //     }
+        // }
+        // BaseFragment fragment = LaunchActivity.getSafeLastFragment();
+        // if (fragment != null && fragment.getParentLayout() instanceof ActionBarLayout) {
+        //     fragment = ((ActionBarLayout) fragment.getParentLayout()).getSheetFragment();
+        // }
+        // if (fragment == null) {
+        //     return false;
+        // }
+        // fragment.createArticleViewer(false).open(url, progress);
+        // return true;
+        FileLog.d("Internal browser disabled: openInTelegramBrowser skipped");
+        return false;
     }
 
     public static boolean openInExternalBrowser(Context context, String url, boolean allowIntent) {

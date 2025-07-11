@@ -76,17 +76,18 @@ public class Browser {
     }
 
     private static void setCurrentSession(CustomTabsSession session) {
-        customTabsCurrentSession = new WeakReference<>(session);
+        // customTabsCurrentSession = new WeakReference<>(session);
     }
 
     private static CustomTabsSession getSession() {
-        if (customTabsClient == null) {
-            customTabsSession = null;
-        } else if (customTabsSession == null) {
-            customTabsSession = customTabsClient.newSession(new NavigationCallback());
-            setCurrentSession(customTabsSession);
-        }
-        return customTabsSession;
+        // if (customTabsClient == null) {
+        //     customTabsSession = null;
+        // } else if (customTabsSession == null) {
+        //     customTabsSession = customTabsClient.newSession(new NavigationCallback());
+        //     setCurrentSession(customTabsSession);
+        // }
+        // return customTabsSession;
+        return null;
     }
 
     public static void bindCustomTabsService(Activity activity) {
@@ -292,164 +293,8 @@ public class Browser {
     }
 
     public static void openUrl(final Context context, Uri uri, boolean _allowCustom, boolean tryTelegraph, boolean forceNotInternalForApps, Progress inCaseLoading, String browser, boolean allowIntent, boolean allowInAppBrowser, boolean forceRequest) {
-        if (context == null || uri == null) {
-            return;
-        }
-        final int currentAccount = UserConfig.selectedAccount;
-        boolean[] forceBrowser = new boolean[]{false};
-        boolean internalUri = isInternalUri(uri, forceBrowser);
-        String browserPackage = getBrowserPackageName(browser);
-        if (browserPackage != null) {
-            tryTelegraph = false;
-            _allowCustom = false;
-        }
-        final boolean allowCustom = _allowCustom;
-        if (tryTelegraph) {
-            try {
-                String host = AndroidUtilities.getHostAuthority(uri);
-                if (UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser() != null && (isTelegraphUrl(host, true) || "telegram.org".equalsIgnoreCase(host) && (uri.toString().toLowerCase().contains("telegram.org/faq") || uri.toString().toLowerCase().contains("telegram.org/privacy") || uri.toString().toLowerCase().contains("telegram.org/blog")))) {
-                    final AlertDialog[] progressDialog = new AlertDialog[] {
-                        new AlertDialog(context, AlertDialog.ALERT_TYPE_SPINNER)
-                    };
-
-                    Uri finalUri = uri;
-                    TL_account.getWebPagePreview req = new TL_account.getWebPagePreview();
-                    req.message = uri.toString();
-                    final int reqId = ConnectionsManager.getInstance(UserConfig.selectedAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-                        if (inCaseLoading != null) {
-                            inCaseLoading.end();
-                        } else {
-                            try {
-                                progressDialog[0].dismiss();
-                            } catch (Throwable ignore) {}
-                            progressDialog[0] = null;
-                        }
-
-                        boolean ok = false;
-                        if (response instanceof TL_account.webPagePreview) {
-                            final TL_account.webPagePreview preview = (TL_account.webPagePreview) response;
-                            MessagesController.getInstance(currentAccount).putUsers(preview.users, false);
-                            if (preview.media instanceof TLRPC.TL_messageMediaWebPage) {
-                                TLRPC.TL_messageMediaWebPage webPage = (TLRPC.TL_messageMediaWebPage) preview.media;
-                                if (webPage.webpage instanceof TLRPC.TL_webPage && webPage.webpage.cached_page != null) {
-                                    NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.openArticle, webPage.webpage, finalUri.toString());
-                                    ok = true;
-                                }
-                            }
-                        }
-                        if (!ok) {
-                            openUrl(context, finalUri, allowCustom, false);
-                        }
-                    }));
-                    if (inCaseLoading != null) {
-                        inCaseLoading.init();
-                    } else {
-                        AndroidUtilities.runOnUIThread(() -> {
-                            if (progressDialog[0] == null) {
-                                return;
-                            }
-                            try {
-                                progressDialog[0].setOnCancelListener(dialog -> ConnectionsManager.getInstance(UserConfig.selectedAccount).cancelRequest(reqId, true));
-                                progressDialog[0].show();
-                            } catch (Exception ignore) {}
-                        }, 1000);
-                    }
-                    return;
-                }
-            } catch (Exception ignore) {
-
-            }
-        }
-        try {
-            String scheme = uri.getScheme() != null ? uri.getScheme().toLowerCase() : "";
-            if ("http".equals(scheme) || "https".equals(scheme)) {
-                try {
-                    uri = uri.normalizeScheme();
-                } catch (Exception e) {
-                    FileLog.e(e);
-                }
-            }
-            String host = AndroidUtilities.getHostAuthority(uri.toString().toLowerCase());
-            if (AccountInstance.getInstance(currentAccount).getMessagesController().autologinDomains.contains(host)) {
-                String token = "autologin_token=" + URLEncoder.encode(AccountInstance.getInstance(UserConfig.selectedAccount).getMessagesController().autologinToken, "UTF-8");
-                String url = uri.toString();
-                int idx = url.indexOf("://");
-                String path = idx >= 0 && idx <= 5 && !url.substring(0, idx).contains(".") ? url.substring(idx + 3) : url;
-                String fragment = uri.getEncodedFragment();
-                String finalPath = fragment == null ? path : path.substring(0, path.indexOf("#" + fragment));
-                if (finalPath.indexOf('?') >= 0) {
-                    finalPath += "&" + token;
-                } else {
-                    finalPath += "?" + token;
-                }
-                if (fragment != null) {
-                    finalPath += "#" + fragment;
-                }
-                uri = Uri.parse("https://" + finalPath);
-            }
-            if (allowCustom && !SharedConfig.inappBrowser && SharedConfig.customTabs && !internalUri && !scheme.equals("tel") && !isTonsite(uri.toString())) {
-                if (forceBrowser[0] || !openInExternalApp(context, uri.toString(), false) || !hasAppToOpen(context, uri.toString())) {
-                    if (MessagesController.getInstance(currentAccount).authDomains.contains(host)) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        ApplicationLoader.applicationContext.startActivity(intent);
-                        return;
-                    }
-
-                    Intent share = new Intent(ApplicationLoader.applicationContext, ShareBroadcastReceiver.class);
-                    share.setAction(Intent.ACTION_SEND);
-
-                    PendingIntent copy = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 0, new Intent(ApplicationLoader.applicationContext, CustomTabsCopyReceiver.class), PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-
-                    CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder(getSession());
-
-                    builder.addMenuItem(LocaleController.getString(R.string.CopyLink), copy);
-
-                    builder.setToolbarColor(Theme.getColor(Theme.key_actionBarBrowser));
-                    builder.setShowTitle(true);
-                    builder.setActionButton(BitmapFactory.decodeResource(context.getResources(), R.drawable.msg_filled_shareout), LocaleController.getString(R.string.ShareFile), PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 0, share, PendingIntent.FLAG_MUTABLE ), true);
-
-                    CustomTabsIntent intent = builder.build();
-                    intent.setUseNewTask();
-                    intent.launchUrl(context, uri);
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            FileLog.e(e);
-        }
-        try {
-            final boolean inappBrowser = (
-                allowInAppBrowser && BubbleActivity.instance == null &&
-                SharedConfig.inappBrowser &&
-                TextUtils.isEmpty(browserPackage) &&
-                !RestrictedDomainsList.getInstance().isRestricted(AndroidUtilities.getHostAuthority(uri, true)) &&
-                (uri.getScheme() == null || "https".equals(uri.getScheme()) || "http".equals(uri.getScheme()) || "tonsite".equals(uri.getScheme()))
-                ||
-                isTonsite(uri.toString())
-            );
-            final boolean isIntentScheme = uri.getScheme() != null && uri.getScheme().equalsIgnoreCase("intent");
-            if (internalUri && LaunchActivity.instance != null) {
-                openAsInternalIntent(LaunchActivity.instance, uri.toString(), forceNotInternalForApps, forceRequest, inCaseLoading);
-            } else {
-                if (inappBrowser) {
-                    if (!openInExternalApp(context, uri.toString(), allowIntent)) {
-                        if (uri != null && uri.getScheme() != null && uri.getScheme().equalsIgnoreCase("intent")) {
-                            final Intent intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
-                            final String fallbackUrl = intent.getStringExtra("browser_fallback_url");
-                            if (!TextUtils.isEmpty(fallbackUrl)) {
-                                uri = Uri.parse(fallbackUrl);
-                            }
-                        }
-                        openInTelegramBrowser(context, uri.toString(), inCaseLoading);
-                    }
-                } else {
-                    openInExternalBrowser(context, uri.toString(), allowIntent, browserPackage);
-                }
-            }
-        } catch (Exception e) {
-            FileLog.e(e);
-        }
+//        Log.d("BlockedURL", "Blocked attempt to open URL: " + uri);
+        return;
     }
 
     public static boolean openAsInternalIntent(Context context, String url) {

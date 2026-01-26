@@ -51,6 +51,7 @@ import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.LaunchActivity;
+import org.telegram.ui.PeerColorActivity;
 import org.telegram.ui.PremiumPreviewFragment;
 import org.telegram.ui.Stories.recorder.HintView2;
 
@@ -96,15 +97,33 @@ public final class BulletinFactory {
     }
 
     public void showForError(TLRPC.TL_error error) {
+        showForError(error, false);
+    }
+    public void showForError(TLRPC.TL_error error, boolean top) {
         if (!LaunchActivity.isActive) return;
         if (error == null) {
             Bulletin b = createErrorBulletin(LocaleController.formatString(R.string.UnknownError));
             b.hideAfterBottomSheet = false;
-            b.show();
+            b.show(top);
         } else {
             Bulletin b = createErrorBulletin(LocaleController.formatString(R.string.UnknownErrorCode, error.text));
             b.hideAfterBottomSheet = false;
-            b.show();
+            b.show(top);
+        }
+    }
+    public void showForError(String errorCode) {
+        showForError(errorCode, false);
+    }
+    public void showForError(String errorCode, boolean top) {
+        if (!LaunchActivity.isActive) return;
+        if (TextUtils.isEmpty(errorCode)) {
+            Bulletin b = createErrorBulletin(LocaleController.formatString(R.string.UnknownError));
+            b.hideAfterBottomSheet = false;
+            b.show(top);
+        } else {
+            Bulletin b = createErrorBulletin(LocaleController.formatString(R.string.UnknownErrorCode, errorCode));
+            b.hideAfterBottomSheet = false;
+            b.show(top);
         }
     }
 
@@ -235,6 +254,26 @@ public final class BulletinFactory {
         layout.titleTextView.setSingleLine(true);
         layout.titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         layout.titleTextView.setMaxLines(1);
+        layout.titleTextView.setTypeface(null);
+        layout.subtitleTextView.setVisibility(View.GONE);
+        return create(layout, text.length() < 20 ? Bulletin.DURATION_SHORT : Bulletin.DURATION_LONG);
+    }
+
+    public Bulletin createSimpleMultiBulletin(TLRPC.Document document, CharSequence text) {
+        if (document == null) return new Bulletin.EmptyBulletin();
+        final Bulletin.TwoLineLayout layout = new Bulletin.TwoLineLayout(getContext(), resourcesProvider);
+        TLRPC.PhotoSize thumbSize = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, dp(28), true, null, false);
+        TLRPC.PhotoSize photoSize = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, dp(28), true, thumbSize, true);
+        layout.imageView.setImage(
+            ImageLocation.getForDocument(photoSize, document), "28_28",
+            ImageLocation.getForDocument(thumbSize, document), "28_28",
+            null, 0, 0, null
+        );
+        layout.imageView.getImageReceiver().setRoundRadius(dp(5));
+        layout.titleTextView.setSingleLine(false);
+        layout.titleTextView.setText(text);
+        layout.titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        layout.titleTextView.setMaxLines(3);
         layout.titleTextView.setTypeface(null);
         layout.subtitleTextView.setVisibility(View.GONE);
         return create(layout, text.length() < 20 ? Bulletin.DURATION_SHORT : Bulletin.DURATION_LONG);
@@ -416,6 +455,9 @@ public final class BulletinFactory {
     public Bulletin createSimpleBulletin(Drawable drawable, CharSequence text) {
         final Bulletin.LottieLayout layout = new Bulletin.LottieLayout(getContext(), resourcesProvider);
         layout.imageView.setImageDrawable(drawable);
+        if (drawable instanceof PeerColorActivity.PeerColorDrawable) {
+            ((PeerColorActivity.PeerColorDrawable) drawable).setView(layout.imageView);
+        }
         layout.textView.setText(text);
         layout.textView.setSingleLine(false);
         layout.textView.setMaxLines(2);
@@ -1007,7 +1049,7 @@ public final class BulletinFactory {
         }
     }
 
-    private Context getContext() {
+    public Context getContext() {
         Context context = null;
         if (fragment != null) {
             context = fragment.getParentActivity();
@@ -1021,6 +1063,10 @@ public final class BulletinFactory {
             context = ApplicationLoader.applicationContext;
         }
         return context;
+    }
+
+    public Theme.ResourcesProvider getResourcesProvider() {
+        return resourcesProvider;
     }
 
     //region Static Factory
@@ -1211,7 +1257,7 @@ public final class BulletinFactory {
         layout.textView.setSingleLine(false);
         layout.textView.setMaxLines(3);
         layout.textView.setText(text);
-        return Bulletin.make(fragment, layout, Bulletin.DURATION_LONG);
+        return create(layout, Bulletin.DURATION_LONG);
     }
 
     public boolean showForwardedBulletinWithTag(long did, int messagesCount) {

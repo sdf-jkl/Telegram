@@ -21,6 +21,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 
 import org.telegram.messenger.regular.BuildConfig;
+import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.UpdateAppAlertDialog;
@@ -39,6 +40,18 @@ public class ApplicationLoaderImpl extends ApplicationLoader {
     }
 
 
+    private String getVersionName(int code) {
+        switch (code) {
+            case 0: return "local-debug";
+            case 1: return "private";
+            case 4: return "public";
+            case 5: return "hardcore";
+            case 6: return "standalone";
+            case 7: return "release";
+            default: return "unknown";
+        }
+    }
+
     @Override
     protected void startAppCenterInternal(Activity context) {
         if (org.telegram.messenger.BuildConfig.DEBUG) {
@@ -52,10 +65,13 @@ public class ApplicationLoaderImpl extends ApplicationLoader {
                     if (!TextUtils.isEmpty(username))
                         userId = "@" + username;
                 }
+                if (ConnectionsManager.getInstance(UserConfig.selectedAccount).isTestBackend()) {
+                    userId += " [TEST SERVER]";
+                }
 
                 final FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
                 crashlytics.setUserId(userId);
-                crashlytics.setCustomKey("version", BuildVars.DEBUG_PRIVATE_VERSION ? "private" : "public");
+                crashlytics.setCustomKey("version", getVersionName(org.telegram.messenger.BuildConfig.VERSION_NUM));
                 crashlytics.setCustomKey("model", Build.MODEL);
                 crashlytics.setCustomKey("manufacturer", Build.MANUFACTURER);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

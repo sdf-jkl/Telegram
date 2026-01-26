@@ -30,6 +30,8 @@ public class NotificationCenter {
     public static final int updateInterfaces = totalEvents++;
     public static final int dialogsNeedReload = totalEvents++;
     public static final int closeChats = totalEvents++;
+    public static final int closeChatActivity = totalEvents++;
+    public static final int closeProfileActivity = totalEvents++;
     public static final int messagesDeleted = totalEvents++;
     public static final int historyCleared = totalEvents++;
     public static final int messagesRead = totalEvents++;
@@ -193,6 +195,7 @@ public class NotificationCenter {
 
     public static final int didStartedCall = totalEvents++;
     public static final int groupCallUpdated = totalEvents++;
+    public static final int storyGroupCallUpdated = totalEvents++;
     public static final int groupCallSpeakingUsersUpdated = totalEvents++;
     public static final int groupCallScreencastStateChanged = totalEvents++;
     public static final int activeGroupCallsUpdated = totalEvents++;
@@ -201,6 +204,8 @@ public class NotificationCenter {
     public static final int didEndCall = totalEvents++;
     public static final int closeInCallActivity = totalEvents++;
     public static final int groupCallVisibilityChanged = totalEvents++;
+    public static final int liveStoryUpdated = totalEvents++;
+    public static final int liveStoryMessageUpdate = totalEvents++;
 
     public static final int appDidLogout = totalEvents++;
 
@@ -224,6 +229,7 @@ public class NotificationCenter {
     public static final int boostedChannelByUser = totalEvents++;
     public static final int boostByChannelCreated = totalEvents++;
     public static final int didUpdatePremiumGiftStickers = totalEvents++;
+    public static final int didUpdateTonGiftStickers = totalEvents++;
     public static final int didUpdatePremiumGiftFieldIcon = totalEvents++;
     public static final int storiesEnabledUpdate = totalEvents++;
     public static final int storiesBlocklistUpdate = totalEvents++;
@@ -235,6 +241,7 @@ public class NotificationCenter {
     public static final int savedMessagesDialogsUpdate = totalEvents++;
     public static final int savedReactionTagsUpdate = totalEvents++;
     public static final int userIsPremiumBlockedUpadted = totalEvents++;
+    public static final int storyAlbumsCollectionsUpdate = totalEvents++;
     public static final int savedMessagesForwarded = totalEvents++;
     public static final int emojiKeywordsLoaded = totalEvents++;
     public static final int smsJobStatusUpdate = totalEvents++;
@@ -261,6 +268,7 @@ public class NotificationCenter {
     public static final int updateAllMessages = totalEvents++;
     public static final int starGiftsLoaded = totalEvents++;
     public static final int starUserGiftsLoaded = totalEvents++;
+    public static final int starUserGiftCollectionsLoaded = totalEvents++;
     public static final int starGiftSoldOut = totalEvents++;
     public static final int updateStories = totalEvents++;
     public static final int botDownloadsUpdate = totalEvents++;
@@ -270,7 +278,12 @@ public class NotificationCenter {
     public static final int messagesFeeUpdated = totalEvents++;
     public static final int commonChatsLoaded = totalEvents++;
     public static final int appConfigUpdated = totalEvents++;
+    public static final int activeAuctionsUpdated = totalEvents++;
     public static final int conferenceEmojiUpdated = totalEvents++;
+    public static final int contentSettingsLoaded = totalEvents++;
+    public static final int musicListLoaded = totalEvents++;
+    public static final int musicIdsLoaded = totalEvents++;
+    public static final int profileMusicUpdated = totalEvents++;
 
     //global
     public static final int pushMessagesUpdated = totalEvents++;
@@ -343,6 +356,7 @@ public class NotificationCenter {
     public static final int onDatabaseReset = totalEvents++;
     public static final int wallpaperSettedToUser = totalEvents++;
     public static final int storiesUpdated = totalEvents++;
+    public static final int storyDeleted = totalEvents++;
     public static final int storiesListUpdated = totalEvents++;
     public static final int storiesDraftsUpdated = totalEvents++;
     public static final int chatlistFolderUpdate = totalEvents++;
@@ -353,6 +367,12 @@ public class NotificationCenter {
     public static final int onReceivedChannelDifference = totalEvents++;
     public static final int storiesReadUpdated = totalEvents++;
     public static final int nearEarEvent = totalEvents++;
+    public static final int translationModelDownloading = totalEvents++;
+    public static final int translationModelDownloaded = totalEvents++;
+    public static final int botForumTopicDidCreate = totalEvents++;
+    public static final int botForumDraftUpdate = totalEvents++;
+    public static final int botForumDraftDelete = totalEvents++;
+    public static final int tlSchemeParseException = totalEvents++;
 
     public static boolean alreadyLogged;
 
@@ -552,7 +572,7 @@ public class NotificationCenter {
     }
 
     public void postNotificationName(final int id, Object... args) {
-        boolean allowDuringAnimation = id == startAllHeavyOperations || id == stopAllHeavyOperations || id == didReplacedPhotoInMemCache || id == closeChats || id == invalidateMotionBackground || id == needCheckSystemBarColors;
+        boolean allowDuringAnimation = id == startAllHeavyOperations || id == stopAllHeavyOperations || id == didReplacedPhotoInMemCache || id == closeChats || id == invalidateMotionBackground || id == needCheckSystemBarColors || id == messageReceivedByServer2;
         ArrayList<Integer> expiredIndices = null;
         if (!allowDuringAnimation && allowedNotifications.size() > 0) {
             int size = allowedNotifications.size();
@@ -853,6 +873,21 @@ public class NotificationCenter {
                 }
                 removeObserver(observer[0], id);
                 observer[0] = null;
+            }
+        };
+        addObserver(observer[0], id);
+    }
+
+    public void listenOnce(int id, Utilities.Callback3<Integer, Object[], Runnable> callback) {
+        final NotificationCenterDelegate[] observer = new NotificationCenterDelegate[1];
+        observer[0] = (nid, account, args) -> {
+            if (nid == id && observer[0] != null) {
+                if (callback != null) {
+                    callback.run(account, args, () -> {
+                        removeObserver(observer[0], id);
+                        observer[0] = null;
+                    });
+                }
             }
         };
         addObserver(observer[0], id);

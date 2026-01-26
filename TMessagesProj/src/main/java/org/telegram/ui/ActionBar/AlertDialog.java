@@ -14,7 +14,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -80,8 +79,8 @@ import org.telegram.ui.Components.RadialProgressView;
 import org.telegram.ui.Components.ScaleStateListAnimator;
 import org.telegram.ui.Components.spoilers.SpoilersTextView;
 import org.telegram.ui.LaunchActivity;
+import org.telegram.ui.Stars.BalanceCloud;
 import org.telegram.ui.Stars.StarsIntroActivity;
-import org.telegram.ui.Stars.StarsReactionsSheet;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -113,6 +112,10 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
     private AnimatorSet[] shadowAnimation = new AnimatorSet[2];
     private int customViewOffset = 12;
     private boolean withCancelDialog;
+
+    public TextView getMessageTextView() {
+        return messageTextView;
+    }
 
     private int dialogButtonColorKey = Theme.key_dialogButton;
 
@@ -610,8 +613,17 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
         return this;
     }
 
+    public FrameLayout getFullscreenContainerView() {
+        return fullscreenContainerView;
+    }
+
     private FrameLayout fullscreenContainerView;
-    private StarsReactionsSheet.BalanceCloud starsBalanceCloud;
+
+    public BalanceCloud getStarsBalanceCloud() {
+        return starsBalanceCloud;
+    }
+
+    private BalanceCloud starsBalanceCloud;
 
     private AlertDialogView containerView;
     public AlertDialogView getContainerView() {
@@ -622,7 +634,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
         containerView = new AlertDialogView(getContext());
         containerView.setOrientation(LinearLayout.VERTICAL);
         if ((blurredBackground || progressViewStyle == ALERT_TYPE_SPINNER) && progressViewStyle != ALERT_TYPE_LOADING) {
-            containerView.setBackgroundDrawable(null);
+            containerView.setBackground(null);
             containerView.setPadding(0, 0, 0, 0);
             if (blurredBackground && !blurredNativeBackground) {
                 containerView.setWillNotDraw(false);
@@ -635,13 +647,12 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 containerView.setPadding(rect.left, rect.top, rect.right, rect.bottom);
                 drawBackground = true;
             } else {
-                containerView.setBackgroundDrawable(null);
+                containerView.setBackground(null);
                 containerView.setPadding(0, 0, 0, 0);
-                containerView.setBackgroundDrawable(shadowDrawable);
+                containerView.setBackground(shadowDrawable);
                 drawBackground = false;
             }
         }
-        containerView.setFitsSystemWindows(Build.VERSION.SDK_INT >= 21);
         View rootView = containerView;
         if (needStarsBalance) {
             if (fullscreenContainerView == null) {
@@ -649,10 +660,9 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 fullscreenContainerView.setOnClickListener(v -> {
                     dismiss();
                 });
-//                fullscreenContainerView.setFitsSystemWindows(Build.VERSION.SDK_INT >= 21);
             }
             if (starsBalanceCloud == null) {
-                starsBalanceCloud = new StarsReactionsSheet.BalanceCloud(getContext(), UserConfig.selectedAccount, resourcesProvider);
+                starsBalanceCloud = new BalanceCloud(getContext(), UserConfig.selectedAccount, resourcesProvider);
                 ScaleStateListAnimator.apply(starsBalanceCloud);
                 starsBalanceCloud.setOnClickListener(v -> {
                     new StarsIntroActivity.StarsOptionsSheet(getContext(), resourcesProvider).show();
@@ -909,6 +919,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 int buttonsWidth = 0;
                 TextPaint paint = new TextPaint();
                 paint.setTextSize(dp(16));
+                paint.setTypeface(AndroidUtilities.bold());
                 if (positiveButtonText != null) {
                     if (buttonsWidth > 0) buttonsWidth += dp(8);
                     buttonsWidth += paint.measureText(positiveButtonText, 0, positiveButtonText.length()) + dp(12 + 12);
@@ -921,7 +932,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                     if (buttonsWidth > 0) buttonsWidth += dp(8);
                     buttonsWidth += paint.measureText(neutralButtonText, 0, neutralButtonText.length()) + dp(12 + 12);
                 }
-                if (buttonsWidth > AndroidUtilities.displaySize.x - dp(110)) {
+                if (buttonsWidth > AndroidUtilities.displaySize.x - dp(64)) {
                     verticalButtons = true;
                 }
             }
@@ -1033,7 +1044,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                     @Override
                     public void setTextColor(int color) {
                         super.setTextColor(color);
-                        setBackgroundDrawable(Theme.getRoundRectSelectorDrawable(dp(6), color));
+                        setBackground(Theme.getRoundRectSelectorDrawable(dp(6), color));
                     }
                 };
                 textView.setMinWidth(dp(64));
@@ -1043,10 +1054,10 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 textView.setGravity(Gravity.CENTER);
                 textView.setTypeface(AndroidUtilities.bold());
                 textView.setText(positiveButtonText);
-                textView.setBackgroundDrawable(Theme.getRoundRectSelectorDrawable(dp(6), getThemedColor(dialogButtonColorKey)));
+                textView.setBackground(Theme.getRoundRectSelectorDrawable(dp(6), getThemedColor(dialogButtonColorKey)));
                 textView.setPadding(dp(12), 0, dp(12), 0);
                 if (verticalButtons) {
-                    buttonsLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 36, LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT));
+                    buttonsLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 36, Gravity.FILL_HORIZONTAL));
                 } else {
                     buttonsLayout.addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 36, Gravity.TOP | Gravity.RIGHT));
                 }
@@ -1084,10 +1095,10 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 textView.setEllipsize(TextUtils.TruncateAt.END);
                 textView.setSingleLine(true);
                 textView.setText(negativeButtonText.toString());
-                textView.setBackgroundDrawable(Theme.getRoundRectSelectorDrawable(dp(6), getThemedColor(dialogButtonColorKey)));
+                textView.setBackground(Theme.getRoundRectSelectorDrawable(dp(6), getThemedColor(dialogButtonColorKey)));
                 textView.setPadding(dp(12), 0, dp(12), 0);
                 if (verticalButtons) {
-                    buttonsLayout.addView(textView, 0, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 36, LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT));
+                    buttonsLayout.addView(textView, 0, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 36, Gravity.FILL_HORIZONTAL));
                 } else {
                     buttonsLayout.addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 36, Gravity.TOP | Gravity.RIGHT));
                 }
@@ -1128,7 +1139,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                 textView.setBackground(Theme.getRoundRectSelectorDrawable(dp(6), getThemedColor(dialogButtonColorKey)));
                 textView.setPadding(dp(12), 0, dp(12), 0);
                 if (verticalButtons) {
-                    buttonsLayout.addView(textView, 1, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 36, LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT));
+                    buttonsLayout.addView(textView, 1, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 36, Gravity.FILL_HORIZONTAL));
                 } else {
                     buttonsLayout.addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 36, Gravity.TOP | Gravity.LEFT));
                 }
@@ -1235,8 +1246,14 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
 
     @NonNull
     public Browser.Progress makeButtonLoading(int type) {
+        return makeButtonLoading(type, true, true);
+    }
+
+    public Browser.Progress makeButtonLoading(int type, boolean dismissWhenEnd, boolean clearDismissDialogByButtons) {
         final View button = getButton(type);
-        dismissDialogByButtons = false;
+        if (clearDismissDialogByButtons) {
+            dismissDialogByButtons = false;
+        }
         return new Browser.Progress(() -> {
             if (button instanceof TextViewWithLoading) {
                 ((TextViewWithLoading) button).setLoading(true, true);
@@ -1245,7 +1262,9 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
             if (button instanceof TextViewWithLoading) {
                 ((TextViewWithLoading) button).setLoading(false, true);
             }
-            dismiss();
+            if (dismissWhenEnd) {
+                dismiss();
+            }
         });
     }
 

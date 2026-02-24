@@ -64,6 +64,10 @@ import java.util.regex.Pattern;
 
 public class Browser {
 
+    public static boolean isWebDisabled() {
+        return true;
+    }
+
     private static WeakReference<CustomTabsSession> customTabsCurrentSession;
     private static CustomTabsSession customTabsSession;
     private static CustomTabsClient customTabsClient;
@@ -296,7 +300,13 @@ public class Browser {
     }
 
     public static void openUrl(final Context context, Uri uri, boolean _allowCustom, boolean tryTelegraph, boolean forceNotInternalForApps, Progress inCaseLoading, String browser, boolean allowIntent, boolean allowInAppBrowser, boolean forceRequest) {
-//        Log.d("BlockedURL", "Blocked attempt to open URL: " + uri);
+        if (isWebDisabled()) {
+            if (inCaseLoading != null) {
+                inCaseLoading.cancel();
+            }
+            return;
+        }
+        //        Log.d("BlockedURL", "Blocked attempt to open URL: " + uri);
         return;
     }
 
@@ -310,6 +320,9 @@ public class Browser {
         return openAsInternalIntent(context, url, forceNotInternalForApps, false, null);
     }
     public static boolean openAsInternalIntent(Context context, String url, boolean forceNotInternalForApps, boolean forceRequest, Progress progress) {
+        if (isWebDisabled()) {
+            return false;
+        }
         // if (url == null) return false;
         // LaunchActivity activity = null;
         // if (AndroidUtilities.findActivity(context) instanceof LaunchActivity) {
@@ -334,6 +347,9 @@ public class Browser {
     }
 
     public static boolean openInTelegramBrowser(Context context, String url, Browser.Progress progress) {
+        if (isWebDisabled()) {
+            return false;
+        }
         // if (LaunchActivity.instance != null) {
         //     BottomSheetTabs tabs = LaunchActivity.instance.getBottomSheetTabs();
         //     if (tabs != null && tabs.tryReopenTab(url) != null) {
@@ -357,6 +373,9 @@ public class Browser {
         return openInExternalBrowser(context, url, allowIntent, null);
     }
     public static boolean openInExternalBrowser(Context context, String url, boolean allowIntent, String browser) {
+        if (isWebDisabled()) {
+            return false;
+        }
         if (url == null) return false;
         try {
             Uri uri = Uri.parse(url);
@@ -405,6 +424,9 @@ public class Browser {
     }
 
     public static boolean openInExternalApp(Context context, String url, boolean allowIntent) {
+        if (isWebDisabled()) {
+            return false;
+        }
         if (url == null) return false;
         try {
             if (isTonsite(url) || isInternalUrl(url, null)) return false;

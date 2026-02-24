@@ -704,6 +704,10 @@ public class PhotoViewerWebView extends FrameLayout {
 
     @SuppressLint("AddJavascriptInterface")
     public void init(int seekTime, TLRPC.WebPage webPage) {
+        if (Browser.isWebDisabled()) {
+            setVisibility(View.GONE);
+            return;
+        }
         currentWebpage = webPage;
         currentYoutubeId = WebPlayerView.getYouTubeVideoId(webPage.embed_url);
         String originalUrl = webPage.url;

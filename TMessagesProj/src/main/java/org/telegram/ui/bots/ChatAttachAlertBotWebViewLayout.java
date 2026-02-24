@@ -486,6 +486,9 @@ public class ChatAttachAlertBotWebViewLayout extends ChatAttachAlert.AttachAlert
     }
 
     public void requestWebView(int currentAccount, long peerId, long botId, boolean silent, int replyToMsgId, String startCommand, long monoforumTopicId) {
+        if (Browser.isWebDisabled()) {
+            return;
+        }
         this.currentAccount = currentAccount;
         this.peerId = peerId;
         this.botId = botId;

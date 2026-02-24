@@ -5063,6 +5063,9 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
     }
 
     private boolean open(final MessageObject messageObject, TLRPC.WebPage webpage, String url, String webUrl, Browser.Progress progress) {
+        if (Browser.isWebDisabled()) {
+            return false;
+        }
         if (parentActivity == null || sheet == null && isVisible && !collapsed/* || messageObject == null && webpage == null && webUrl == null*/) {
             return false;
         }

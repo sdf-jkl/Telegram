@@ -1333,6 +1333,10 @@ public class BotWebViewSheet extends Dialog implements NotificationCenter.Notifi
     Drawable verifiedDrawable;
 
     public void requestWebView(BaseFragment fragment, WebViewRequestProps props) {
+        if (Browser.isWebDisabled()) {
+            dismiss();
+            return;
+        }
         this.requestProps = props;
         this.currentAccount = props.currentAccount;
         this.peerId = props.peerId;
